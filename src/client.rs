@@ -1,12 +1,14 @@
-mod structs;
-
-use structs::Message;
 use std::io::{Read, Write};
-use std::net::{TcpStream};
+use std::net::TcpStream;
+
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use serde::__private::from_utf8_lossy;
 use serde_json;
+
+use structs::Message;
+
+mod structs;
 
 fn main() {
     let stream = TcpStream::connect("localhost:7878");
@@ -14,68 +16,8 @@ fn main() {
         Ok(mut stream) => {
             let message = "\"Hello\"";
             write_message_to_server(&mut stream, message);
-
-            let message_length = read_message_server_length(&mut stream);
-
-            let mut buffer = vec![0; message_length as usize];
-            match stream.read(&mut buffer) {
-                Ok(_) => {
-                    let text = from_utf8_lossy(&buffer);
-
-                    println!("Reponse du serveur: {:?}", &text.to_string());
-                    let message = serde_json::from_str(&text);
-                    match message {
-                        Ok(message) => {
-                            match message {
-                                Message::Welcome(welcome) => {
-                                    println!("Match ok: {:?}", welcome);
-                                    subscribe_new_player(&mut stream);
-                                    let server_message_length = read_message_server_length(&mut stream);
-                                    println!("{:?}", server_message_length);
-                                    let mut buffer = vec![0; server_message_length as usize];
-                                    match stream.read(&mut buffer) {
-                                        Ok(_) => {
-                                            let text = from_utf8_lossy(&buffer);
-                                            println!("Reponse du serveur: {:?}", &text.to_string());
-                                            let message = serde_json::from_str(&text);
-                                            match message {
-                                                Ok(message) => {
-                                                    match message {
-                                                        Message::SubscribeResult(subscribe_result) => {
-                                                            println!("Subscribe match: {:?}", subscribe_result);
-                                                            println!("Attente de message...");
-                                                            loop {
-                                                                listen_to_server(&mut stream);
-                                                            }
-                                                        }
-                                                        _ => {
-                                                            println!("Error sbscribe result");
-                                                        }
-                                                    }
-                                                }
-                                                Err(e) => {
-                                                    println!("Match ko: {:?}", e);
-                                                }
-                                            }
-                                        }
-                                        Err(e) => {
-                                            println!("Match ko: {:?}", e);
-                                        }
-                                    }
-                                }
-                                _ => {
-                                    println!("Unknown message type");
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            println!("{:?}", err);
-                        }
-                    }
-                }
-                Err(e) => {
-                    println!("Failed to receive data: {}", e);
-                }
+            loop {
+                listen_to_server(&mut stream);
             }
         }
         Err(err) => panic!("Cannot connect : {err}"),
@@ -125,6 +67,13 @@ fn listen_to_server(stream: &mut TcpStream) {
                 match message {
                     Ok(message) => {
                         match message {
+                            Message::SubscribeResult(subscribe_result) => {
+                                println!("Subscribe match: {:?}", subscribe_result);
+                            }
+                            Message::Welcome(welcome) => {
+                                println!("Match ok: {:?}", welcome);
+                                subscribe_new_player(stream);
+                            }
                             Message::PublicLeaderBoard(public_leaderboard) => {
                                 println!("Public leaderboard: {:?}", public_leaderboard);
                             }
