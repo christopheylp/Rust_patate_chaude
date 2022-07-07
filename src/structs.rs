@@ -83,3 +83,20 @@ pub(crate) struct PublicPlayer {
     pub(crate) is_active: bool,
     pub(crate) total_used_time: f64,
 }
+
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct MD5HashCashInput {
+    pub complexity: u32,
+    pub message: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MD5HashCashOutput {
+    pub(crate) seed: u64,
+    pub(crate) hashcode: String,
+}
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MD5HashCashChallenge {
+    pub(crate) input: MD5HashCashInput
+}
