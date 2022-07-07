@@ -1,20 +1,27 @@
-use std::ptr::hash;
 use std::u64;
 use md5;
 
-fn solve(input: MD5HashCashInput) -> String {
+fn solve(input: MD5HashCashInput) -> MD5HashCashOutput {
+    let mut output = MD5HashCashOutput {
+        seed: 0,
+        hashcode: "".to_string()
+    };
     let mut compteur: u64 = 1;
     let mut is_seed_found = false;
     let mut hash_code: String = "".to_string();
+    let mut seed_value: String = "".to_string();
     let complexity = input.complexity;
     let message = input.message;
     while is_seed_found != true {
-        let seed_value = to_seed(compteur);
+        compteur += 1;
+        seed_value = to_seed(compteur).parse().unwrap();
         hash_code = get_hash_code(seed_value, &message).to_uppercase();
         is_seed_found = checkSeed(hash_code.clone(), complexity);
-        compteur += 1;
     }
-    hash_code
+    output.hashcode = hash_code;
+    output.seed = compteur;
+
+      output
 
 }
 fn checkSeed(hash: String, complexity: u32) -> bool {
@@ -123,7 +130,7 @@ fn main(){}
 
 #[cfg(test)]
 mod test{
-    use crate::{solve, MD5HashCashInput};
+    use crate::{solve, MD5HashCashInput, MD5HashCashOutput};
 
     #[test]
     fn sample_test(){
@@ -133,7 +140,11 @@ mod test{
             message: String::from("hello"),
         };
 
-        assert_eq!(solve(input), "00441745D9BDF8E5D3C7872AC9DBB2C3");
+        let output: MD5HashCashOutput;
+        output = solve(input);
+
+        assert_eq!(output.hashcode, "00441745D9BDF8E5D3C7872AC9DBB2C3");
+        assert_eq!(output.seed, 844);
     }
 
 }
