@@ -3,12 +3,10 @@ mod structs;
 use structs::Message;
 use std::io::{Read, Write};
 use std::net::{TcpStream};
-use std::process::exit;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use serde::__private::from_utf8_lossy;
 use serde_json;
-use crate::structs::ChallengeResult;
 
 fn main() {
     let stream = TcpStream::connect("localhost:7878");
@@ -126,7 +124,23 @@ fn listen_to_server(stream: &mut TcpStream) {
                 let message = serde_json::from_str(&text);
                 match message {
                     Ok(message) => {
-                        message_match_action(stream, message);
+                        match message {
+                            Message::PublicLeaderBoard(public_leaderboard) => {
+                                println!("Public leaderboard: {:?}", public_leaderboard);
+                            }
+                            Message::Challenge(challenge) => {
+                                println!("Challenge: {:?}", challenge);
+                                let challenge_result = "challenge";
+                                write_message_to_server(stream, &challenge_result);
+                            }
+                            Message::EndOfGame(end_of_game) => {
+                                println!("End of game: {:?}", end_of_game);
+                                std::process::exit(0);
+                            }
+                            _ => {
+                                println!("Unknown message type");
+                            }
+                        }
                     }
                     Err(e) => {
                         println!("Match ko: {:?}", e);
@@ -138,29 +152,4 @@ fn listen_to_server(stream: &mut TcpStream) {
             }
         }
     }
-}
-
-fn message_match_action(stream: &mut TcpStream, message: _) {
-    match message {
-        Message::PublicLeaderBoard(public_leaderboard) => {
-            println!("Public leaderboard: {:?}", public_leaderboard);
-        }
-        Message::Challenge(challenge) => {
-            println!("Challenge: {:?}", challenge);
-
-
-            write_message_to_server(stream, &challenge_result.to_string());
-        }
-        Message::EndOfGame(end_of_game) => {
-            println!("End of game: {:?}", end_of_game);
-            std::process::exit(0);
-        }
-        _ => {
-            println!("Unknown message type");
-        }
-    }
-}
-
-let subscribe_player(){
-
 }
